@@ -203,8 +203,11 @@ async def extract(item: dict) -> dict:
     url = item.get("url", "")
 
     if _is_youtube(url):
-        # YouTube → DAİMA Playwright (BS4 izlenme çekemez)
+        # YouTube → DAİMA Playwright öncelikli (metrikler için)
         content = await _playwright(url)
+        if not content:
+            # Playwright sunucuda çökerse boş dönmemek için BS4'e düş (Garantici yöntem)
+            content = await _bs4(url)
         if not content:
             content = await _llm_fallback(url, "")
     else:
