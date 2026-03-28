@@ -65,6 +65,21 @@ async def _playwright(url: str) -> str | None:
             if is_youtube:
                 # Shorts metrikleri için biraz daha sabır (3sn)
                 await page.wait_for_timeout(3000)
+                
+                # YouTube Çerez Onay Sayfasını (Consent Page) Algıla ve Gez
+                if "consent.youtube.com" in page.url or await page.get_by_text("Before you continue").is_visible():
+                    # Farklı dillerdeki "Kabul Et" butonlarını dene
+                    for btn_text in ["Accept all", "I agree", "Tümünü kabul et", "Kabul ediyorum"]:
+                        try:
+                            # aria-label veya text üzerinden yakala
+                            btn = page.get_by_role("button", name=btn_text, exact=False)
+                            if await btn.is_visible():
+                                await btn.click()
+                                await page.wait_for_timeout(2000) # Sayfanın asıl videoya dönmesini bekle
+                                break
+                        except:
+                            continue
+
                 # YouTube'un yeni (2025/26) DOM yapısı için daha geniş seçiciler
                 selectors = [
                     "yt-formatted-string.factoid-value", # 1.2M gibi rakamlar
@@ -83,6 +98,7 @@ async def _playwright(url: str) -> str | None:
                 metrics_text = " | ".join(set(metrics[:5])) # Tekrarları temizle
                 if meta_desc:
                     metrics_text += f" | META: {meta_desc[:200]}"
+
             else:
                 metrics_text = ""
 
