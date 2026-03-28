@@ -23,7 +23,8 @@ COPY . .
 RUN playwright install chromium
 
 # Portu ac
-EXPOSE 8000
+EXPOSE 8080
+
 
 # API Sunucusunu baslat
 CMD python run.py

@@ -36,6 +36,7 @@ if __name__ == "__main__":
     else:
         import os
         import uvicorn
-        port = int(os.getenv("PORT", "8000"))
+        port = int(os.getenv("PORT", "8080"))
+
         print(f"[START] Listening on http://0.0.0.0:{port}")
         uvicorn.run("run:app", host="0.0.0.0", port=port, reload=False)
