@@ -23,7 +23,8 @@ COPY . .
 RUN playwright install chromium
 
 # Portu ac
-EXPOSE 8080
+EXPOSE 8888
+
 
 
 # API Sunucusunu baslat

@@ -9,7 +9,8 @@ services:
     env_file:
       - .env
     ports:
-      - "8080:8080"
+      - "8888:8888"
+
 
     volumes:
       - ./knowledge:/app/knowledge
