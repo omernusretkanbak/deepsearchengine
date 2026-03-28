@@ -1,0 +1,22 @@
+version: '3.8'
+
+services:
+  deepsearch:
+    build: .
+    container_name: deepsearch-ecosystem
+    restart: always
+    env_file:
+      - .env
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./knowledge:/app/knowledge
+      - ./.env:/app/.env
+    # Linux uzerinde Playwright'in calismasi icin bazi kısıtları asıyoruz
+    shm_size: '2gb'
+    cap_add:
+      - SYS_ADMIN
+
+networks:
+  default:
+    name: deepsearch_network
