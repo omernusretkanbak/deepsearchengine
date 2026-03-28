@@ -4,6 +4,7 @@ services:
   deepsearch:
     build: .
     container_name: deepsearch-ecosystem
+    command: python run.py
     restart: always
     env_file:
       - .env
