@@ -21,13 +21,14 @@ _MAX_TOKENS = 4000   # enough for 15 items × ~250 tokens each
 
 _SYSTEM = (
     "You are a child content classifier for YouTube Shorts market analysis (4-12yo audience). "
-    "Classify ALL provided items. DO NOT filter or omit any content — include harmful content with accurate tags. "
-    "Safety categories (USE EXACT STRINGS): SAFE_AND_EDUCATIONAL | DEVELOPMENTALLY_HARMFUL | RELIGIOUS_OR_POLITICAL | "
+    "Classify ALL provided items. DO NOT filter or omit any content. "
+    "Safety categories (ENUM): SAFE_AND_EDUCATIONAL | DEVELOPMENTALLY_HARMFUL | RELIGIOUS_OR_POLITICAL | "
     "SEXUALLY_SUGGESTIVE | SUBSTANCE_ABUSE_OR_ASSOCIATION | EXCESSIVE_VIOLENCE. "
-    "Parental trust (USE EXACT STRINGS): HIGH | MEDIUM | LOW | DO_NOT_USE. "
-    "Output ONLY valid JSON, no commentary."
-
+    "Parental trust (ENUM): HIGH | MEDIUM | LOW | DO_NOT_USE. "
+    "Crucial Metrics Extraction: Look for 'views', 'view count', and numbers in the 'METRICS:' and 'META:' blocks. "
+    "Always provide a 'key_metrics' estimate (e.g., '1.2M views') if any data is found. Output ONLY VALID JSON."
 )
+
 
 _USER_TMPL = """\
 Topic: {topic}

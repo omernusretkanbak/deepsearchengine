@@ -57,10 +57,41 @@ async def _playwright(url: str) -> str | None:
         async with async_playwright() as pw:
             browser = await pw.chromium.launch(headless=True)
             page    = await browser.new_page()
-            await page.goto(url, timeout=20_000, wait_until="networkidle")
+            
+            # YouTube ise biraz daha sabırlı ol ve metrikleri bekle
+            is_youtube = "youtube.com" in url or "youtu.be" in url
+            await page.goto(url, timeout=25_000, wait_until="networkidle")
+            
+            if is_youtube:
+                # Shorts metrikleri için biraz daha sabır (3sn)
+                await page.wait_for_timeout(3000)
+                # YouTube'un yeni (2025/26) DOM yapısı için daha geniş seçiciler
+                selectors = [
+                    "yt-formatted-string.factoid-value", # 1.2M gibi rakamlar
+                    "#view-count",                       # Klasik izlenme alanı
+                    "span.view-count",                   # Alternatif izlenme alanı
+                    "[aria-label*='views']",             # ARIA (Erişilebilirlik) katmanı
+                    "[aria-label*='izlenme']"            # Türkçe ARIA katmanı
+                ]
+                metrics = await page.eval_on_selector_all(
+                    ", ".join(selectors),
+                    "els => els.map(el => el.getAttribute('aria-label') || el.innerText)"
+                )
+                
+                # Meta description içinden de izlenme çekmeye çalış (Garantici yöntem)
+                meta_desc = await page.get_attribute("meta[name='description']", "content")
+                metrics_text = " | ".join(set(metrics[:5])) # Tekrarları temizle
+                if meta_desc:
+                    metrics_text += f" | META: {meta_desc[:200]}"
+            else:
+                metrics_text = ""
+
             text = await page.inner_text("body")
             await browser.close()
-            return text if len(text) > 80 else None
+            
+            final_content = f"METRICS: {metrics_text}\n\n{text}" if metrics_text else text
+            return final_content if len(final_content) > 80 else None
+
     except Exception:
         return None
 
@@ -70,7 +101,7 @@ async def _playwright(url: str) -> str | None:
 async def _llm_fallback(url: str, hint: str = "") -> str:
     system = "Extract: page title, view count, description. Output compact JSON {title,views,description}."
     user   = f"URL:{url}\nPartial content:{hint[:400]}"
-    return await call_llm("google", _FALLBACK_MODEL, system, user, max_tokens=300, json_mode=True)
+    return await call_llm("google", "gemini-1.5-flash", system, user, max_tokens=300, json_mode=True)
 
 
 
@@ -79,14 +110,14 @@ async def _llm_fallback(url: str, hint: str = "") -> str:
 async def extract(item: dict) -> dict:
     url = item.get("url", "")
 
-    # Tier 1
+    # Tier 1: BS4 (Fast & Cheap)
     content = await _bs4(url)
 
-    # Tier 2 — JS-rendered fallback
+    # Tier 2: Playwright (JS-Rendered & Metrics)
     if not content:
         content = await _playwright(url)
 
-    # Tier 3 — LLM fallback
+    # Tier 3: LLM (Expensive Fallback)
     if not content:
         content = await _llm_fallback(url, content or "")
 
@@ -95,3 +126,4 @@ async def extract(item: dict) -> dict:
         "url":         url,
         "raw_content": _wrap(content or "No content extracted."),
     }
+
