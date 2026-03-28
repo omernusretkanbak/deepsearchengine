@@ -9,6 +9,7 @@ import time
 import asyncio
 from core.agents import scout, extractor, analyst
 from core.utils import memory, security
+import random
 from core.utils.schemas import (
     DeepSearchOutput, AutomationMetadata, SearchResult, MacroTrend,
 )
@@ -41,14 +42,14 @@ async def run(query: str) -> DeepSearchOutput:
     if not urls:
         return _empty(query, time.monotonic() - start)
 
-    # ── Phase 2: Extractor (STRICTLY sequential to avoid 429) ──
-    sem = asyncio.Semaphore(3)  # 3 parallel extractions for speed
+    # Düşük hız, yüksek güvenlik için eşzamanlı kopya 2'ye düşürüldü
+    sem = asyncio.Semaphore(2)  # 2 parallel extractions for pacing
 
     async def _safe_extract(item):
         async with sem:
             try:
-                # Add a small delay between tasks for a "healthy flow"
-                await asyncio.sleep(1.0)
+                # İnsan taklidi rastgele bekleme süresi (Jitter) ekleniyor
+                await asyncio.sleep(random.uniform(2.0, 4.0))
                 return await asyncio.wait_for(extractor.extract(item), timeout=60)
             except Exception:
                 return None

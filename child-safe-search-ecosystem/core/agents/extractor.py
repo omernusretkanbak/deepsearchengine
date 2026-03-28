@@ -82,6 +82,7 @@ async def _bs4(url: str) -> str | None:
 async def _playwright(url: str) -> str | None:
     try:
         from playwright.async_api import async_playwright
+        import random
         is_yt = _is_youtube(url)
 
         async with async_playwright() as pw:
@@ -105,8 +106,8 @@ async def _playwright(url: str) -> str | None:
             await page.goto(url, timeout=30_000, wait_until="domcontentloaded")
 
             if is_yt:
-                # Sayfanın tam yüklenmesini bekle
-                await page.wait_for_timeout(4000)
+                # Sayfanın tam yüklenmesini bekle (anti-bot atlatmak için jitter ekle)
+                await page.wait_for_timeout(int(random.uniform(3500, 5500)))
 
                 # Consent sayfasına yönlendirildiyse buton ile de geç
                 current = page.url
@@ -116,7 +117,7 @@ async def _playwright(url: str) -> str | None:
                             locator = page.get_by_role("button", name=btn)
                             if await locator.is_visible(timeout=2000):
                                 await locator.click()
-                                await page.wait_for_timeout(3000)
+                                await page.wait_for_timeout(int(random.uniform(2500, 4500)))
                                 break
                         except Exception:
                             continue
