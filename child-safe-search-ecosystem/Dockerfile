@@ -25,5 +25,6 @@ RUN playwright install chromium
 # Portu ac
 EXPOSE 8000
 
-# API Sunucusunu baslat (Asıl kullanım modu)
-CMD ["python", "run.py"]
+# API Sunucusunu baslat
+CMD python run.py
+
