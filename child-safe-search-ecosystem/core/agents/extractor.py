@@ -26,13 +26,21 @@ _HEADERS        = {
     )
 }
 
-# YouTube consent bypass cookie — skips the "Before you continue" wall entirely
-_YT_CONSENT_COOKIE = {
-    "name": "SOCS",
-    "value": "CAISNQgDEitib3FfaWRlbnRpdHlmcm9udGVuZHVpc2VydmVyXzIwMjUwMzI0LjA3X3AxGgJlbiADGgYIgOi8tAY",
-    "domain": ".youtube.com",
-    "path": "/",
-}
+# YouTube consent bypass cookies — skips the "Before you continue" wall globally
+_YT_COOKIES = [
+    {
+        "name": "SOCS",
+        "value": "CAISNQgDEitib3FfaWRlbnRpdHlmcm9udGVuZHVpc2VydmVyXzIwMjUwMzI0LjA3X3AxGgJlbiADGgYIgOi8tAY",
+        "domain": ".youtube.com",
+        "path": "/",
+    },
+    {
+        "name": "CONSENT",
+        "value": "YES+cb.20230501-14-p0.en+FX+430",
+        "domain": ".youtube.com",
+        "path": "/",
+    }
+]
 
 
 def _is_youtube(url: str) -> bool:
@@ -100,7 +108,7 @@ async def _playwright(url: str) -> str | None:
 
             # YouTube ise consent cookie'yi ÖNCEDEN enjekte et
             if is_yt:
-                await context.add_cookies([_YT_CONSENT_COOKIE])
+                await context.add_cookies(_YT_COOKIES)
 
             page = await context.new_page()
             await page.goto(url, timeout=30_000, wait_until="domcontentloaded")
@@ -112,7 +120,8 @@ async def _playwright(url: str) -> str | None:
                 # Consent sayfasına yönlendirildiyse buton ile de geç
                 current = page.url
                 if "consent" in current:
-                    for btn in ["Accept all", "I agree", "Tümünü kabul et"]:
+                    # Sunucunun lokasyonuna göre Almanca ve diğer dillerdeki onay butonları
+                    for btn in ["Accept all", "I agree", "Tümünü kabul et", "Alle akzeptieren", "Zustimmen"]:
                         try:
                             locator = page.get_by_role("button", name=btn)
                             if await locator.is_visible(timeout=2000):
