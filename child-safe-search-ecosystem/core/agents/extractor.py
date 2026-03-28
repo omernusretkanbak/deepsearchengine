@@ -1,15 +1,16 @@
 """
 Extractor Agent — 3-tier code-first content extraction.
 
-Tier 1: BeautifulSoup  (0 tokens, 0 cost)
-Tier 2: Playwright     (0 tokens — JS-rendered pages)
-Tier 3: GPT-4o mini   (fallback — obfuscated/blocked DOM)
+Tier 1: BeautifulSoup  (0 tokens, 0 cost) — NON-YouTube only
+Tier 2: Playwright     (0 tokens — JS-rendered pages, YouTube always)
+Tier 3: LLM fallback   (last resort)
 
 Token strategy: raw content hard-capped at MAX_CHARS before any LLM call.
 Security: ONLY extracts raw text. Never executes JS.
 """
 
 import os
+import re
 import httpx
 from bs4 import BeautifulSoup
 from core.utils.model_router import call_llm
@@ -25,14 +26,41 @@ _HEADERS        = {
     )
 }
 
+# YouTube consent bypass cookie — skips the "Before you continue" wall entirely
+_YT_CONSENT_COOKIE = {
+    "name": "SOCS",
+    "value": "CAISNQgDEitib3FfaWRlbnRpdHlmcm9udGVuZHVpc2VydmVyXzIwMjUwMzI0LjA3X3AxGgJlbiADGgYIgOi8tAY",
+    "domain": ".youtube.com",
+    "path": "/",
+}
+
+
+def _is_youtube(url: str) -> bool:
+    return "youtube.com" in url or "youtu.be" in url
+
 
 def _wrap(text: str) -> str:
     return f"{_DELIMITER_S}\n{text.strip()[:_MAX_CHARS]}\n{_DELIMITER_E}"
 
 
-# ── Tier 1: BeautifulSoup ────────────────────────────────────
+def _extract_view_count_from_text(text: str) -> str:
+    """Regex ile metin içinden izlenme sayılarını yakala."""
+    patterns = [
+        r'([\d,.]+[MKBmkb]?\s*(?:views|izlenme|görüntülenme))',
+        r'([\d,.]+\s*(?:view|izlenme))',
+        r'(\d{1,3}(?:[.,]\d{3})*(?:\s*(?:views|izlenme)))',
+    ]
+    for p in patterns:
+        m = re.search(p, text, re.IGNORECASE)
+        if m:
+            return m.group(1).strip()
+    return ""
+
+
+# ── Tier 1: BeautifulSoup (NON-YouTube only) ─────────────────
 
 async def _bs4(url: str) -> str | None:
+    """YouTube URL'leri için KULLANILMAZ — BS4 JS render edemez."""
     try:
         async with httpx.AsyncClient(
             timeout=15, headers=_HEADERS, follow_redirects=True
@@ -49,76 +77,124 @@ async def _bs4(url: str) -> str | None:
         return None
 
 
-# ── Tier 2: Playwright ───────────────────────────────────────
+# ── Tier 2: Playwright (YouTube DAİMA buradan geçer) ─────────
 
 async def _playwright(url: str) -> str | None:
     try:
         from playwright.async_api import async_playwright
+        is_yt = _is_youtube(url)
+
         async with async_playwright() as pw:
-            browser = await pw.chromium.launch(headless=True)
-            page    = await browser.new_page()
-            
-            # YouTube ise biraz daha sabırlı ol ve metrikleri bekle
-            is_youtube = "youtube.com" in url or "youtu.be" in url
-            await page.goto(url, timeout=25_000, wait_until="networkidle")
-            
-            if is_youtube:
-                # Shorts metrikleri için biraz daha sabır (3sn)
-                await page.wait_for_timeout(3000)
-                
-                # YouTube Çerez Onay Sayfasını (Consent Page) Algıla ve Gez
-                if "consent.youtube.com" in page.url or await page.get_by_text("Before you continue").is_visible():
-                    # Farklı dillerdeki "Kabul Et" butonlarını dene
-                    for btn_text in ["Accept all", "I agree", "Tümünü kabul et", "Kabul ediyorum"]:
+            browser = await pw.chromium.launch(
+                headless=True,
+                args=["--no-sandbox", "--disable-dev-shm-usage"]
+            )
+            context = await browser.new_context(
+                locale="en-US",
+                user_agent=(
+                    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+                    "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36"
+                ),
+            )
+
+            # YouTube ise consent cookie'yi ÖNCEDEN enjekte et
+            if is_yt:
+                await context.add_cookies([_YT_CONSENT_COOKIE])
+
+            page = await context.new_page()
+            await page.goto(url, timeout=30_000, wait_until="domcontentloaded")
+
+            if is_yt:
+                # Sayfanın tam yüklenmesini bekle
+                await page.wait_for_timeout(4000)
+
+                # Consent sayfasına yönlendirildiyse buton ile de geç
+                current = page.url
+                if "consent" in current:
+                    for btn in ["Accept all", "I agree", "Tümünü kabul et"]:
                         try:
-                            # aria-label veya text üzerinden yakala
-                            btn = page.get_by_role("button", name=btn_text, exact=False)
-                            if await btn.is_visible():
-                                await btn.click()
-                                await page.wait_for_timeout(2000) # Sayfanın asıl videoya dönmesini bekle
+                            locator = page.get_by_role("button", name=btn)
+                            if await locator.is_visible(timeout=2000):
+                                await locator.click()
+                                await page.wait_for_timeout(3000)
                                 break
-                        except:
+                        except Exception:
                             continue
 
-                # YouTube'un yeni (2025/26) DOM yapısı için daha geniş seçiciler
+                # --- Metrikleri topla ---
+                metrics_parts = []
+
+                # 1) Meta description (en güvenilir: "X views" içerir)
+                try:
+                    meta = await page.get_attribute(
+                        'meta[name="description"]', "content", timeout=3000
+                    )
+                    if meta:
+                        metrics_parts.append(f"META: {meta[:300]}")
+                except Exception:
+                    pass
+
+                # 2) OG description (YouTube bunu da doldurur)
+                try:
+                    og = await page.get_attribute(
+                        'meta[property="og:description"]', "content", timeout=2000
+                    )
+                    if og and og not in str(metrics_parts):
+                        metrics_parts.append(f"OG: {og[:200]}")
+                except Exception:
+                    pass
+
+                # 3) DOM seçicileri ile doğrudan metrik çekme
                 selectors = [
-                    "yt-formatted-string.factoid-value", # 1.2M gibi rakamlar
-                    "#view-count",                       # Klasik izlenme alanı
-                    "span.view-count",                   # Alternatif izlenme alanı
-                    "[aria-label*='views']",             # ARIA (Erişilebilirlik) katmanı
-                    "[aria-label*='izlenme']"            # Türkçe ARIA katmanı
+                    "#view-count",
+                    "yt-formatted-string.factoid-value",
+                    "span.view-count",
+                    "[aria-label*='views']",
+                    "ytd-watch-info-text .yt-core-attributed-string",
                 ]
-                metrics = await page.eval_on_selector_all(
-                    ", ".join(selectors),
-                    "els => els.map(el => el.getAttribute('aria-label') || el.innerText)"
-                )
-                
-                # Meta description içinden de izlenme çekmeye çalış (Garantici yöntem)
-                meta_desc = await page.get_attribute("meta[name='description']", "content")
-                metrics_text = " | ".join(set(metrics[:5])) # Tekrarları temizle
-                if meta_desc:
-                    metrics_text += f" | META: {meta_desc[:200]}"
+                try:
+                    dom_metrics = await page.eval_on_selector_all(
+                        ", ".join(selectors),
+                        "els => els.map(el => (el.getAttribute('aria-label') || el.innerText || '').trim()).filter(t => t.length > 0)"
+                    )
+                    if dom_metrics:
+                        metrics_parts.append("DOM: " + " | ".join(dom_metrics[:5]))
+                except Exception:
+                    pass
+
+                metrics_block = "\n".join(metrics_parts)
+                body_text = await page.inner_text("body")
+
+                # Regex ile body text'ten de izlenme yakala
+                regex_views = _extract_view_count_from_text(body_text)
+                if regex_views:
+                    metrics_block += f"\nREGEX_VIEWS: {regex_views}"
+
+                await browser.close()
+
+                if metrics_block:
+                    final = f"METRICS:\n{metrics_block}\n\nCONTENT:\n{body_text}"
+                else:
+                    final = body_text
+
+                return final if len(final) > 80 else None
 
             else:
-                metrics_text = ""
-
-            text = await page.inner_text("body")
-            await browser.close()
-            
-            final_content = f"METRICS: {metrics_text}\n\n{text}" if metrics_text else text
-            return final_content if len(final_content) > 80 else None
+                # YouTube olmayan siteler
+                text = await page.inner_text("body")
+                await browser.close()
+                return text if len(text) > 80 else None
 
     except Exception:
         return None
 
 
-# ── Tier 3: GPT-4o mini fallback ─────────────────────────────
+# ── Tier 3: LLM fallback ─────────────────────────────────────
 
 async def _llm_fallback(url: str, hint: str = "") -> str:
-    system = "Extract: page title, view count, description. Output compact JSON {title,views,description}."
+    system = "Extract: page title, view count, like count, description. Output compact JSON {title,views,likes,description}."
     user   = f"URL:{url}\nPartial content:{hint[:400]}"
     return await call_llm("google", "gemini-1.5-flash", system, user, max_tokens=300, json_mode=True)
-
 
 
 # ── Public interface ──────────────────────────────────────────
@@ -126,20 +202,21 @@ async def _llm_fallback(url: str, hint: str = "") -> str:
 async def extract(item: dict) -> dict:
     url = item.get("url", "")
 
-    # Tier 1: BS4 (Fast & Cheap)
-    content = await _bs4(url)
-
-    # Tier 2: Playwright (JS-Rendered & Metrics)
-    if not content:
+    if _is_youtube(url):
+        # YouTube → DAİMA Playwright (BS4 izlenme çekemez)
         content = await _playwright(url)
-
-    # Tier 3: LLM (Expensive Fallback)
-    if not content:
-        content = await _llm_fallback(url, content or "")
+        if not content:
+            content = await _llm_fallback(url, "")
+    else:
+        # Diğer siteler → BS4 önce, Playwright yedek
+        content = await _bs4(url)
+        if not content:
+            content = await _playwright(url)
+        if not content:
+            content = await _llm_fallback(url, content or "")
 
     return {
         "title":       item.get("title", ""),
         "url":         url,
         "raw_content": _wrap(content or "No content extracted."),
     }
-

@@ -13,7 +13,7 @@ from core.utils.schemas import (
     DeepSearchOutput, AutomationMetadata, SearchResult, MacroTrend,
 )
 
-_TIMEOUT     = int(os.getenv("AGENT_TIMEOUT_SECONDS", "30"))
+_TIMEOUT     = int(os.getenv("AGENT_TIMEOUT_SECONDS", "90"))
 _MAX_RESULTS = int(os.getenv("MAX_RESULTS", "15"))
 
 _MODEL_TAG = (
@@ -42,14 +42,14 @@ async def run(query: str) -> DeepSearchOutput:
         return _empty(query, time.monotonic() - start)
 
     # ── Phase 2: Extractor (STRICTLY sequential to avoid 429) ──
-    sem = asyncio.Semaphore(1)
+    sem = asyncio.Semaphore(3)  # 3 parallel extractions for speed
 
     async def _safe_extract(item):
         async with sem:
             try:
                 # Add a small delay between tasks for a "healthy flow"
                 await asyncio.sleep(1.0)
-                return await asyncio.wait_for(extractor.extract(item), timeout=50)
+                return await asyncio.wait_for(extractor.extract(item), timeout=60)
             except Exception:
                 return None
 
