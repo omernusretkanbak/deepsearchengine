@@ -199,6 +199,54 @@ async def _playwright(url: str) -> str | None:
         return None
 
 
+# ── Tier 0: Official APIs ────────────────────────────────────
+
+async def _youtube_api(url: str) -> str | None:
+    api_key = os.getenv("YOUTUBE_DATA_API_V3_API_KEY", os.getenv("YOUTUBE_API_KEY", ""))
+    if not api_key:
+        return None
+        
+    # Regex ile video ID'sini çıkar (11 karakterli eşsiz kimlik)
+    vid_match = re.search(r'(?:v=|shorts/|youtu\.be/)([\w-]{11})', url)
+    if not vid_match:
+        return "NON_VIDEO_CONTENT: Playlist or Channel. No trackable video metrics."
+        
+    video_id = vid_match.group(1)
+    
+    try:
+        async with httpx.AsyncClient(timeout=10) as c:
+            api_url = f"https://www.googleapis.com/youtube/v3/videos?part=snippet,statistics&id={video_id}&key={api_key}"
+            r = await c.get(api_url)
+            if r.status_code != 200:
+                print(f"[YT API ERROR] {r.text}")
+                return None
+            
+            data = r.json()
+            items = data.get("items", [])
+            if not items:
+                return "Video deleted, private, or inaccessible."
+            
+            snippet = items[0].get("snippet", {})
+            stats = items[0].get("statistics", {})
+            
+            title = snippet.get("title", "")
+            desc = snippet.get("description", "")
+            views = int(stats.get("viewCount", "0"))
+            
+            # İzlenmeyi daha okunaklı yapalım (Analist'in işini kolaylaştır)
+            if views > 1_000_000:
+                views_str = f"{views / 1_000_000:.1f}M views"
+            elif views > 1_000:
+                views_str = f"{views / 1_000:.1f}K views"
+            else:
+                views_str = f"{views} views"
+
+            return f"METRICS:\nVIEWS: {views_str}\n\nCONTENT:\n{title}\n\n{desc}"
+    except Exception as e:
+        print(f"[YT API CRASH] {e}")
+        return None
+
+
 # ── Tier 3: LLM fallback ─────────────────────────────────────
 
 async def _llm_fallback(url: str, hint: str = "") -> str:
@@ -213,13 +261,10 @@ async def extract(item: dict) -> dict:
     url = item.get("url", "")
 
     if _is_youtube(url):
-        # YouTube → DAİMA Playwright öncelikli (metrikler için)
-        content = await _playwright(url)
+        # YouTube → Resmî API ile ışık hızında sıfır hatayla veri çek
+        content = await _youtube_api(url)
         if not content:
-            # Playwright sunucuda çökerse boş dönmemek için BS4'e düş (Garantici yöntem)
-            content = await _bs4(url)
-        if not content:
-            content = await _llm_fallback(url, "")
+            content = await _llm_fallback(url, "YouTube API fetch failed.")
     else:
         # Diğer siteler → BS4 önce, Playwright yedek
         content = await _bs4(url)
