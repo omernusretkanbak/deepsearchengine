@@ -53,9 +53,9 @@ class AutomationMetadata(BaseModel):
 class ProductionPrompts(BaseModel):
     hero_concept:   str = Field(default="", description="English. Ethical hero concept (healthy foods, etc.)")
     image_prompt:   str = Field(default="", description="English. Midjourney/DALL-E prompt for the hero, --ar 9:16")
-    script:         str = Field(default="", description="English. 9:16 vertical video script/storyboard")
-    video_prompt:   str = Field(default="", description="English. Sora/Runway prompt to animate the scene")
-    voiceover_text: str = Field(default="", description="English. Text to feed directly into TTS tools")
+    script:         str = Field(default="", description="English. Professional Time-Coded Storyboard [Time | Visual | Audio] format.")
+    video_prompt:   str = Field(default="", description="English. Sora/Runway prompt to animate the scenes.")
+    voiceover_text: str = Field(default="", description="English. Clean text for TTS (narration) only. No metadata.")
 
 
 class DeepSearchOutput(BaseModel):
