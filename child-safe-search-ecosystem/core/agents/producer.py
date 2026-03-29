@@ -3,7 +3,7 @@ import json
 import re
 from core.utils.model_router import call_llm
 
-_MODEL      = os.getenv("PRODUCER_MODEL", "gemini-2.0-flash-lite") # Fast, great for creative prompts if structure is simple
+_MODEL      = os.getenv("PRODUCER_MODEL", "gpt-4o-mini") # Fast, great for creative prompts if structure is simple
 _MAX_TOKENS = 3000
 
 _SYSTEM = (

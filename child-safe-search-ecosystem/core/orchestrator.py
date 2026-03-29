@@ -18,10 +18,8 @@ _TIMEOUT     = int(os.getenv("AGENT_TIMEOUT_SECONDS", "90"))
 _MAX_RESULTS = int(os.getenv("MAX_RESULTS", "15"))
 
 _MODEL_TAG = (
-    f"{os.getenv('ORCHESTRATOR_MODEL','gemini-2.5-pro-preview-03-25')} + "
-    f"{os.getenv('SCOUT_MODEL','gemini-2.0-flash-lite')} + "
-    f"{os.getenv('EXTRACTOR_FALLBACK_MODEL','gpt-4o-mini')} + "
-    f"{os.getenv('ANALYST_MODEL','claude-3-7-sonnet-20250219')}"
+    f"Analyst:{os.getenv('ANALYST_MODEL','route-llm')} | "
+    f"Producer:{os.getenv('PRODUCER_MODEL','gpt-4o-mini')}"
 )
 
 
