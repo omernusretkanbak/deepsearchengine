@@ -32,6 +32,7 @@ _SYSTEM = (
     "exactly how to ethically steal those viral hooks and inject them into healthy, safe, educational narratives. "
     "ALSO act as an English AI Production Manager: Provide a 5-staged JSON object ('production_prompts_en'). "
     "CRITICAL RULE FOR HEROES: To make children love healthy choices, the \"heroes\" of your scripts and images MUST always be cute, animated healthy foods (like a brave broccoli, a speedy strawberry, or strong milk/egg characters). "
+    "CRITICAL JSON RULE: DO NOT use manual line breaks (literal newlines) or unescaped quotes inside any JSON string values. Use '\\n' for newlines to prevent JSON parse errors. "
     "Output ONLY VALID JSON."
 )
 
