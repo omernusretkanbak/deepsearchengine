@@ -12,7 +12,6 @@ import json
 import re
 import asyncio
 import httpx
-from tavily import AsyncTavilyClient
 from core.utils.model_router import call_llm
 
 _SERPER_URL  = "https://google.serper.dev/search"
@@ -68,17 +67,7 @@ async def _serper(query: str, num: int = 10) -> list[dict]:
         return []
 
 
-async def _tavily(query: str, n: int = 5) -> list[dict]:
-    try:
-        client = AsyncTavilyClient(api_key=os.environ["TAVILY_API_KEY"])
-        r = await client.search(query, max_results=n, include_raw_content=False)
-        return [
-            {"title": i.get("title","")[:_MAX_CHARS_TITLE],
-             "url":   i.get("url","")}
-            for i in r.get("results", [])
-        ]
-    except Exception:
-        return []
+# ── Serper Organic Search (Google Engine) ─────────────────────
 
 
 def _dedupe(items: list[dict]) -> list[dict]:
@@ -137,12 +126,10 @@ async def discover(topic: str, max_results: int = 15) -> list[dict]:
     serper_safe    = await _serper(q_safe,  num=3)
     await asyncio.sleep(0.3)
     serper_toxic   = await _serper(q_toxic, num=3)
-    await asyncio.sleep(0.3)
-    tavily_enriched = await _tavily(q_safe,  n=2)
 
     # Birleştir -> yt_viral_shorts ilk sırada olduğu için kalitede (İzlenme bazlı) önceliklidir!
-    print(f"[SCOUT DEBUG] YT: {len(yt_viral_shorts)} | Serper: {len(serper_safe)+len(serper_toxic)} | Tavily: {len(tavily_enriched)}")
-    combined = _dedupe(yt_viral_shorts + serper_safe + serper_toxic + tavily_enriched)
+    print(f"[SCOUT DEBUG] YT: {len(yt_viral_shorts)} | Serper: {len(serper_safe)+len(serper_toxic)}")
+    combined = _dedupe(yt_viral_shorts + serper_safe + serper_toxic)
     print(f"[SCOUT DEBUG] Combined & Deduped: {len(combined)}")
     filtered = await _filter(combined, topic)
     print(f"[SCOUT DEBUG] After Filter: {len(filtered)}")
