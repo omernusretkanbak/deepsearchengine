@@ -121,12 +121,16 @@ async def call_llm(
             if any(k in msg for k in ["429", "exhausted", "rate limit", "503", "timeout", "connection", "read"]):
                 import random
                 # Akıllı bekleyiş (Exponential Backoff + Jitter)
-                # Örn: 1. deneme ~3sn, 2. deneme ~6sn, 3. deneme ~10sn
                 wait = (2 ** attempt) + random.uniform(1.0, 3.0)
                 print(f"[RETRY {attempt}/5] LLM {provider} network/rate limit error. Sleeping for {wait:.2f}s...")
                 await asyncio.sleep(wait)
                 continue
 
             raise e
+
+    # EĞER BÜTÜN DENEMELERE RAĞMEN ÇÖKERSE: "Google Gemini" Fallback'ine geç!
+    if provider != "google":
+        print(f"[LLM FATAL] Provider '{provider}' failed completely. Swapping to Google Gemini-1.5-Flash as last resort.")
+        return await call_llm("google", "gemini-1.5-flash", system, user, max_tokens, json_mode)
 
     raise last_err
