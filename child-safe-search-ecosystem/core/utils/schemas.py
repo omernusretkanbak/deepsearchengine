@@ -50,12 +50,17 @@ class AutomationMetadata(BaseModel):
     model_used:             str
 
 
+class Scene(BaseModel):
+    scene_number:        int   = Field(description="Sequential scene number")
+    start_timestamp_sec: int   = Field(description="Start time of the scene in seconds (e.g. 0)")
+    end_timestamp_sec:   int   = Field(description="End time of the scene in seconds (e.g. 5)")
+    video_prompt:        str   = Field(description="Prompt for Luma/Runway to animate this exact scene")
+    voiceover_text:      str   = Field(description="Clean English speech text to be narrated during this scene")
+
 class ProductionPrompts(BaseModel):
-    hero_concept:   str = Field(default="", description="English. Ethical hero concept (healthy foods, etc.)")
-    image_prompt:   str = Field(default="", description="English. Midjourney/DALL-E prompt for the hero, --ar 9:16")
-    script:         str = Field(default="", description="English. Professional Time-Coded Storyboard [Time | Visual | Audio] format.")
-    video_prompt:   str = Field(default="", description="English. Sora/Runway prompt to animate the scenes.")
-    voiceover_text: str = Field(default="", description="English. Clean text for TTS (narration) only. No metadata.")
+    hero_concept:        str           = Field(default="", description="English. Ethical hero concept (healthy foods, etc.)")
+    image_anchor_prompt: str           = Field(default="", description="Universal AI prompt for the main character/anchor image. 9:16 vertical.")
+    scenes:              list[Scene]   = Field(default_factory=list, description="Array of scenes for automated N8N looping and assembly")
 
 
 class DeepSearchOutput(BaseModel):

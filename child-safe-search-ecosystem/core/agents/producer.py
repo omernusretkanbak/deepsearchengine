@@ -12,9 +12,8 @@ _SYSTEM = (
     "but ethically strictly avoids 'brainrot' or harmful content. "
     "You will receive a TURKISH STRATEGY that tells you how to capture the viewer's attention. "
     "Your ONLY job is to convert that strategy into a hyper-detailed, strictly structured English JSON plan. "
-    "CRITICAL STORYBOARD RULE: The 'script' field must NOT be a simple paragraph. It MUST be a time-stamped "
-    "storyboard following this format for each beat: '[Start-End Time] | Visual: (what happens on screen) | Audio: (what is said)'. "
-    "The 'voiceover_text' field must be CLEAN TEXT (pure narration) only, no timestamps, ready for TTS tools. "
+    "CRITICAL STORYBOARD RULE: You MUST output a JSON array of 'scenes'. Each scene must have explicit start and end integer timestamps representing seconds. "
+    "Do not use flat strings for the script anymore. Break the video down into 3-5 second actionable clips. "
     "CRITICAL HERO RULE: Use anthropomorphized, cute healthy foods (Brave Broccoli, Speedy Strawberry, Strong Egg)."
 )
 
@@ -25,10 +24,16 @@ TURKISH STRATEGY TO IMPLEMENT:
 Return ONLY this exact JSON structure:
 {
   "hero_concept": "Detailed description of the healthy food character.",
-  "image_prompt": "Universal AI image prompt (Midjourney/DALL-E/Fal.ai). Highly descriptive, cinematic, 8k. Do NOT use tool-specific syntax like '--ar 9:16'. Just describe a vertical portrait composition.",
-  "script": "[00:00-00:05] | Visual: (Scene description) | Audio: (Script text)\\n[00:05-00:10] | Visual: (Scene description) | Audio: (Script text)...",
-  "video_prompt": "Instructions to animate the visual scenes above, specifying camera movements and aspect ratio.",
-  "voiceover_text": "Pure English speech text for TTS - CLEAN, NO metadata."
+  "image_anchor_prompt": "Universal AI image prompt (Midjourney/DALL-E/Fal.ai) for the base character. Highly descriptive, cinematic, vertical portrait.",
+  "scenes": [
+    {
+      "scene_number": 1,
+      "start_timestamp_sec": 0,
+      "end_timestamp_sec": 5,
+      "video_prompt": "Command for Video AI (Luma/Runway) to animate this exact scene. Describe camera motion and action.",
+      "voiceover_text": "Pure English speech text for TTS - CLEAN, NO metadata."
+    }
+  ]
 }"""
 
 def _parse(resp: str) -> dict:
