@@ -40,14 +40,14 @@ async def run(query: str) -> DeepSearchOutput:
     if not urls:
         return _empty(query, time.monotonic() - start)
 
-    # Düşük hız, yüksek güvenlik için eşzamanlı kopya 2'ye düşürüldü
-    sem = asyncio.Semaphore(2)  # 2 parallel extractions for pacing
+    # Hız ve Güvenlik dengesi: Eşzamanlı kopya 5'e çıkarıldı. Hızlı sonuç için.
+    sem = asyncio.Semaphore(5)  # 5 parallel extractions for pacing
 
     async def _safe_extract(item):
         async with sem:
             try:
-                # İnsan taklidi rastgele bekleme süresi (Jitter) ekleniyor
-                await asyncio.sleep(random.uniform(2.0, 4.0))
+                # İnsan taklidi rastgele bekleme süresi (Jitter) minimize edildi
+                await asyncio.sleep(random.uniform(0.5, 1.0))
                 return await asyncio.wait_for(extractor.extract(item), timeout=60)
             except Exception:
                 return None
