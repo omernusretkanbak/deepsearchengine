@@ -7,7 +7,7 @@ All logs are credential-scrubbed before writing.
 import os
 import time
 import asyncio
-from core.agents import scout, extractor, analyst
+from core.agents import scout, extractor, analyst, producer
 from core.utils import memory, security
 import random
 from core.utils.schemas import (
@@ -76,6 +76,16 @@ async def run(query: str) -> DeepSearchOutput:
     except (asyncio.TimeoutError, Exception):
         classified = {"results": [], "macro_trends_4_to_12_age": []}
 
+    # ── Phase 4: Producer (Prompt Engineering Pipeline) ───────
+    try:
+        strategy_text = classified.get("strategic_consulting_tr", "")
+        production_json = await asyncio.wait_for(
+            producer.generate(strategy_text),
+            timeout=_TIMEOUT
+        )
+    except (asyncio.TimeoutError, Exception):
+        production_json = {}
+
     # ── Post-computation: update memory ───────────────────────
     n = len(classified.get("results", []))
     if n:
@@ -104,7 +114,7 @@ async def run(query: str) -> DeepSearchOutput:
         macro_trends_4_to_12_age=trends,
         results=results,
         strategic_consulting_tr=classified.get("strategic_consulting_tr", "Danışmanlık verisi AI tarafından üretilemedi. (Sorgu yapısı uygun olmayabilir)."),
-        production_prompts_en=ProductionPrompts(**classified.get("production_prompts_en", {})),
+        production_prompts_en=ProductionPrompts(**production_json),
         automation_metadata=AutomationMetadata(
             execution_time_seconds=round(time.monotonic() - start, 2),
             model_used=_MODEL_TAG,

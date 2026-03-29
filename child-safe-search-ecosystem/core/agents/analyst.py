@@ -30,9 +30,6 @@ _SYSTEM = (
     "You must analyze the viral mechanics of the harmful videos (fast pacing, colors, formats) "
     "and provide a detailed TURKISH consulting paragraph ('strategic_consulting_tr') telling the creator "
     "exactly how to ethically steal those viral hooks and inject them into healthy, safe, educational narratives. "
-    "ALSO act as an English AI Production Manager: Provide a 5-staged JSON object ('production_prompts_en'). "
-    "CRITICAL RULE FOR HEROES: To make children love healthy choices, the \"heroes\" of your scripts and images MUST always be cute, animated healthy foods (like a brave broccoli, a speedy strawberry, or strong milk/egg characters). "
-    "CRITICAL JSON RULE: DO NOT use manual line breaks (literal newlines) or unescaped quotes inside any JSON string values. Use '\\n' for newlines to prevent JSON parse errors. "
     "Output ONLY VALID JSON."
 )
 
@@ -66,14 +63,7 @@ Return ONLY this JSON structure:
       "why_it_works": "psychological/visual hook explanation"
     }}
   ],
-  "strategic_consulting_tr": "Buraya TAMAMEN TÜRKÇE olarak hedeflenmiş bir Etik Strateji ve Danışmanlık paragrafı yaz. Listedeki aşırı izlenen toksik/brainrot videoların BAŞARILI KANCALARINI (renk, müzik, ritim) nasıl ahlaklı ve eğitici bir YouTube videosuna uyarlayabileceğimizi yaratıcıya doğrudan anlat. Kahramanlarımızın sağlıklı yiyecekler olduğuna vurgu yap. İlham ve cesaret ver.",
-  "production_prompts_en": {
-    "hero_concept": "Describe the healthy food hero character (e.g., A brave, hyper-energetic running Strawberry wearing tiny sneakers)",
-    "image_prompt": "Midjourney/DALL-E prompt to generate this character in an engaging background. Must end with --ar 9:16",
-    "script": "A 9:16 vertical video script (fast-paced, high energy, safe content) featuring this hero.",
-    "video_prompt": "Sora/Runway image-to-video AI prompt to animate this image. Specify the aspect ratio mapping to 9:16 and let the AI determine the best duration for the fast-paced loop.",
-    "voiceover_text": "The exact pure text for the voiceover (TTS) tool to read, enthusiastically!"
-  }
+  "strategic_consulting_tr": "Buraya TAMAMEN TÜRKÇE olarak hedeflenmiş bir Etik Strateji ve Danışmanlık paragrafı yaz. Listedeki aşırı izlenen toksik/brainrot videoların BAŞARILI KANCALARINI (renk, müzik, ritim) nasıl ahlaklı ve eğitici bir YouTube videosuna uyarlayabileceğimizi yaratıcıya doğrudan anlat. İlham ve cesaret ver."
 }}"""
 
 
