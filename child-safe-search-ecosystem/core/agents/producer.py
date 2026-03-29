@@ -25,7 +25,7 @@ TURKISH STRATEGY TO IMPLEMENT:
 Return ONLY this exact JSON structure:
 {
   "hero_concept": "Detailed description of the healthy food character.",
-  "image_prompt": "Midjourney prompt for the hero, vertical 9:16 aspect ratio.",
+  "image_prompt": "Universal AI image prompt (Midjourney/DALL-E/Fal.ai). Highly descriptive, cinematic, 8k. Do NOT use tool-specific syntax like '--ar 9:16'. Just describe a vertical portrait composition.",
   "script": "[00:00-00:05] | Visual: (Scene description) | Audio: (Script text)\\n[00:05-00:10] | Visual: (Scene description) | Audio: (Script text)...",
   "video_prompt": "Instructions to animate the visual scenes above, specifying camera movements and aspect ratio.",
   "voiceover_text": "Pure English speech text for TTS - CLEAN, NO metadata."
