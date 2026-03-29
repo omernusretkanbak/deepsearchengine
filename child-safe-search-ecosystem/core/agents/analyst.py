@@ -48,7 +48,8 @@ Return ONLY this JSON structure:
       "content_safety_category": "ENUM",
       "parental_trust_potential": "ENUM",
       "niche_recommendation_value": "how to safely adapt the viral hook, or avoidance warning",
-      "tags": ["tag1", "tag2"]
+      "tags": ["tag1", "tag2"],
+      "server_debug_snapshot": "first 150 chars of raw content"
     }}
   ],
   "macro_trends_4_to_12_age": [

@@ -33,6 +33,7 @@ class SearchResult(BaseModel):
     parental_trust_potential: ParentalTrust
     niche_recommendation_value: str
     tags:                     list[str]
+    server_debug_snapshot:    str = Field(default="N/A", description="Server Playwright Literal text")
 
     @field_validator("content_safety_category", "parental_trust_potential", mode="before")
     @classmethod
