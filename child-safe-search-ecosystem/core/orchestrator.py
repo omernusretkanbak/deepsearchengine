@@ -104,6 +104,7 @@ async def run(query: str) -> DeepSearchOutput:
         macro_trends_4_to_12_age=trends,
         results=results,
         strategic_consulting_tr=classified.get("strategic_consulting_tr", "Danışmanlık verisi AI tarafından üretilemedi. (Sorgu yapısı uygun olmayabilir)."),
+        production_prompts_en=classified.get("production_prompts_en", "Prompt verisi AI tarafından üretilemedi."),
         automation_metadata=AutomationMetadata(
             execution_time_seconds=round(time.monotonic() - start, 2),
             model_used=_MODEL_TAG,
@@ -117,6 +118,7 @@ def _empty(query: str, elapsed: float) -> DeepSearchOutput:
         macro_trends_4_to_12_age=[],
         results=[],
         strategic_consulting_tr="Sistem hiç video bulamadığı için stratejik danışmanlık üretilemedi.",
+        production_prompts_en="Sistem hiç video bulamadığı için prompt üretilemedi.",
         automation_metadata=AutomationMetadata(
             execution_time_seconds=round(elapsed, 2),
             model_used=_MODEL_TAG,

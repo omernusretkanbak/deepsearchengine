@@ -30,6 +30,8 @@ _SYSTEM = (
     "You must analyze the viral mechanics of the harmful videos (fast pacing, colors, formats) "
     "and provide a detailed TURKISH consulting paragraph ('strategic_consulting_tr') telling the creator "
     "exactly how to ethically steal those viral hooks and inject them into healthy, safe, educational narratives. "
+    "ALSO act as an English AI Prompt Engineer: Provide exact, ready-to-use English AI prompts ('production_prompts_en') "
+    "for ChatGPT/Midjourney to generate scripts or visuals based on your strategy. "
     "Output ONLY VALID JSON."
 )
 
@@ -63,7 +65,8 @@ Return ONLY this JSON structure:
       "why_it_works": "psychological/visual hook explanation"
     }}
   ],
-  "strategic_consulting_tr": "Buraya TAMAMEN TÜRKÇE olarak hedeflenmiş bir Etik Strateji ve Danışmanlık paragrafı yaz. Listedeki aşırı izlenen toksik/brainrot videoların BAŞARILI KANCALARINI (renk, müzik, ritim) nasıl ahlaklı ve eğitici bir YouTube videosuna uyarlayabileceğimizi yaratıcıya doğrudan anlat. İlham ve cesaret ver."
+  "strategic_consulting_tr": "Buraya TAMAMEN TÜRKÇE olarak hedeflenmiş bir Etik Strateji ve Danışmanlık paragrafı yaz. Listedeki aşırı izlenen toksik/brainrot videoların BAŞARILI KANCALARINI (renk, müzik, ritim) nasıl ahlaklı ve eğitici bir YouTube videosuna uyarlayabileceğimizi yaratıcıya doğrudan anlat. İlham ve cesaret ver.",
+  "production_prompts_en": "[PROMPT 1 - Script/ChatGPT]: Write the exact copy-paste English prompt here to generate the script.\\n[PROMPT 2 - Visuals/Midjourney]: Write the prompt for visuals."
 }}"""
 
 

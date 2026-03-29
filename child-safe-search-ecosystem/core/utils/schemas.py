@@ -55,4 +55,5 @@ class DeepSearchOutput(BaseModel):
     macro_trends_4_to_12_age: list[MacroTrend]
     results:                  list[SearchResult]
     strategic_consulting_tr:  str = Field(default="", description="Turkish ethical strategy text")
+    production_prompts_en:    str = Field(default="", description="English AI production prompts (GPT/Midjourney/Sora) wrapping the strategy.")
     automation_metadata:      AutomationMetadata
