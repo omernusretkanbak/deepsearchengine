@@ -47,3 +47,6 @@ query=viral YouTube Shorts kids 2025 | results=6 | models=gemini-1.5-flash + gem
 
 ### [2026-03-29 10:27] Run
 query=viral YouTube Shorts kids 2025 | results=2 | models=gemini-1.5-flash + gemini-1.5-flash + gemini-1.5-flash + route-llm
+
+### [2026-03-30 01:15] Run
+query=viral YouTube Shorts kids 2025 | results=8 | models=Analyst:route-llm | Producer:gpt-4o-mini

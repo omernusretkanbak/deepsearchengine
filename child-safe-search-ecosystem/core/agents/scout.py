@@ -127,18 +127,18 @@ async def discover(topic: str, max_results: int = 15) -> list[dict]:
     """
     # 1. Native YouTube VİRAL ARAMASI (Garantili Milyon İzlenmeler)
     yt_query = f"{topic}"
-    yt_viral_shorts = await _youtube_search(yt_query, max_results=10)
+    yt_viral_shorts = await _youtube_search(yt_query, max_results=5)
     
     # 2. Genel Google Web Araması (Zenginlik ve Farklı açılar katmak için)
     q_safe  = f"educational YouTube Shorts kids {topic} 2025"
     q_toxic = f"viral controversial kids YouTube Shorts {topic} brainrot"
 
     # Sequential searches to avoid rate limits
-    serper_safe    = await _serper(q_safe,  num=5)
-    await asyncio.sleep(0.5)
-    serper_toxic   = await _serper(q_toxic, num=5)
-    await asyncio.sleep(0.5)
-    tavily_enriched = await _tavily(q_safe,  n=3)
+    serper_safe    = await _serper(q_safe,  num=3)
+    await asyncio.sleep(0.3)
+    serper_toxic   = await _serper(q_toxic, num=3)
+    await asyncio.sleep(0.3)
+    tavily_enriched = await _tavily(q_safe,  n=2)
 
     # Birleştir -> yt_viral_shorts ilk sırada olduğu için kalitede (İzlenme bazlı) önceliklidir!
     print(f"[SCOUT DEBUG] YT: {len(yt_viral_shorts)} | Serper: {len(serper_safe)+len(serper_toxic)} | Tavily: {len(tavily_enriched)}")
