@@ -22,6 +22,34 @@ _MAX_CHARS_TITLE = 120  # truncate titles before sending to LLM
 
 # ── Search providers ─────────────────────────────────────────
 
+async def _youtube_search(query: str, max_results: int = 10) -> list[dict]:
+    """Sorguyu doğrudan YouTube'a yollar ve 'En Çok İzlenenlere' (order=viewCount) göre temiz shorts listesi çeker."""
+    api_key = os.getenv("YOUTUBE_DATA_API_V3_API_KEY", os.getenv("YOUTUBE_API_KEY", ""))
+    if not api_key:
+        return []
+    
+    # API URL parameters: type=video, videoDuration=short forces Shorts!
+    url = f"https://www.googleapis.com/youtube/v3/search?part=snippet&q={query}&type=video&videoDuration=short&order=viewCount&maxResults={max_results}&key={api_key}"
+    try:
+        async with httpx.AsyncClient(timeout=15) as c:
+            r = await c.get(url)
+            if r.status_code != 200:
+                print(f"[YT SEARCH ERROR] {r.text}")
+                return []
+            
+            data = r.json()
+            return [
+                {
+                    "title": i['snippet']['title'][:_MAX_CHARS_TITLE],
+                    "url": f"https://www.youtube.com/watch?v={i['id']['videoId']}"
+                }
+                for i in data.get("items", [])
+            ]
+    except Exception as e:
+        print(f"[YT SEARCH CRASH] {e}")
+        return []
+
+
 async def _serper(query: str, num: int = 10) -> list[dict]:
     try:
         async with httpx.AsyncClient(timeout=15) as c:
@@ -94,20 +122,25 @@ async def _filter(items: list[dict], topic: str) -> list[dict]:
 
 async def discover(topic: str, max_results: int = 15) -> list[dict]:
     """
-    Hybrid search: Serper (bulk) + Tavily (enriched).
+    Hybrid search: Native YouTube API (Most Viewed) + Serper (bulk) + Tavily (enriched).
     Searches BOTH safe and toxic/viral angles for full-spectrum data.
     """
+    # 1. Native YouTube VİRAL ARAMASI (Garantili Milyon İzlenmeler)
+    yt_query = f"{topic}"
+    yt_viral_shorts = await _youtube_search(yt_query, max_results=10)
+    
+    # 2. Genel Google Web Araması (Zenginlik ve Farklı açılar katmak için)
     q_safe  = f"educational YouTube Shorts kids {topic} 2025"
     q_toxic = f"viral controversial kids YouTube Shorts {topic} brainrot"
 
     # Sequential searches to avoid rate limits
-    serper_safe    = await _serper(q_safe,  num=10)
+    serper_safe    = await _serper(q_safe,  num=5)
     await asyncio.sleep(0.5)
-    serper_toxic   = await _serper(q_toxic, num=10)
+    serper_toxic   = await _serper(q_toxic, num=5)
     await asyncio.sleep(0.5)
-    tavily_enriched = await _tavily(q_safe,  n=5)
+    tavily_enriched = await _tavily(q_safe,  n=3)
 
-
-    combined = _dedupe(serper_safe + serper_toxic + tavily_enriched)
+    # Birleştir -> yt_viral_shorts ilk sırada olduğu için kalitede (İzlenme bazlı) önceliklidir!
+    combined = _dedupe(yt_viral_shorts + serper_safe + serper_toxic + tavily_enriched)
     filtered = await _filter(combined, topic)
     return filtered[:max_results]
