@@ -50,10 +50,18 @@ class AutomationMetadata(BaseModel):
     model_used:             str
 
 
+class ProductionPrompts(BaseModel):
+    hero_concept:   str = Field(default="", description="English. Ethical hero concept (healthy foods, etc.)")
+    image_prompt:   str = Field(default="", description="English. Midjourney/DALL-E prompt for the hero, --ar 9:16")
+    script:         str = Field(default="", description="English. 9:16 vertical video script/storyboard")
+    video_prompt:   str = Field(default="", description="English. Sora/Runway prompt to animate the scene")
+    voiceover_text: str = Field(default="", description="English. Text to feed directly into TTS tools")
+
+
 class DeepSearchOutput(BaseModel):
     research_topic:           str
     macro_trends_4_to_12_age: list[MacroTrend]
     results:                  list[SearchResult]
     strategic_consulting_tr:  str = Field(default="", description="Turkish ethical strategy text")
-    production_prompts_en:    str = Field(default="", description="English AI production prompts (GPT/Midjourney/Sora) wrapping the strategy.")
+    production_prompts_en:    ProductionPrompts = Field(default_factory=lambda: ProductionPrompts(), description="English nested AI prompts object")
     automation_metadata:      AutomationMetadata
