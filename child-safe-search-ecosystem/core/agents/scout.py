@@ -141,6 +141,9 @@ async def discover(topic: str, max_results: int = 15) -> list[dict]:
     tavily_enriched = await _tavily(q_safe,  n=3)
 
     # Birleştir -> yt_viral_shorts ilk sırada olduğu için kalitede (İzlenme bazlı) önceliklidir!
+    print(f"[SCOUT DEBUG] YT: {len(yt_viral_shorts)} | Serper: {len(serper_safe)+len(serper_toxic)} | Tavily: {len(tavily_enriched)}")
     combined = _dedupe(yt_viral_shorts + serper_safe + serper_toxic + tavily_enriched)
+    print(f"[SCOUT DEBUG] Combined & Deduped: {len(combined)}")
     filtered = await _filter(combined, topic)
+    print(f"[SCOUT DEBUG] After Filter: {len(filtered)}")
     return filtered[:max_results]

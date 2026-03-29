@@ -60,20 +60,26 @@ async def run(query: str) -> DeepSearchOutput:
 
     for fut in asyncio.as_completed(tasks):
         try:
-            extracted.append(await fut)
+            res = await fut
+            if res:
+                extracted.append(res)
         except Exception:
             pass
+    print(f"[ORCHESTRATOR DEBUG] Extracted Content for {len(extracted)} items.")
 
     if not extracted:
         return _empty(query, time.monotonic() - start)
 
     # ── Phase 3: Analyst (batch — single LLM call) ────────────
     try:
+        print(f"[ORCHESTRATOR DEBUG] Calling Analyst with {len(extracted)} extracted items...")
         classified = await asyncio.wait_for(
             analyst.classify_batch(extracted, query),
             timeout=_TIMEOUT * 2,
         )
-    except (asyncio.TimeoutError, Exception):
+        print(f"[ORCHESTRATOR DEBUG] Analyst returned results: {len(classified.get('results', []))}")
+    except (asyncio.TimeoutError, Exception) as e:
+        print(f"[ORCHESTRATOR ERROR] Analyst Phase Failed: {e}")
         classified = {"results": [], "macro_trends_4_to_12_age": []}
 
     # ── Phase 4: Producer (Prompt Engineering Pipeline) ───────

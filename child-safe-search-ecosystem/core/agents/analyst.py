@@ -35,15 +35,15 @@ _SYSTEM = (
 
 
 _USER_TMPL = """\
-Topic: {topic}
+Topic: {{topic}}
 
 Items:
-{items}
+{{items}}
 
 Return ONLY this JSON structure:
-{{
+{
   "results": [
-    {{
+    {
       "id": 0,
       "title": "...",
       "url": "...",
@@ -54,17 +54,17 @@ Return ONLY this JSON structure:
       "niche_recommendation_value": "how to safely adapt the viral hook, or avoidance warning",
       "tags": ["tag1", "tag2"],
       "server_debug_snapshot": "first 150 chars of raw content"
-    }}
+    }
   ],
   "macro_trends_4_to_12_age": [
-    {{
+    {
       "video_format": "...",
       "view_volume_estimate": "...",
       "why_it_works": "psychological/visual hook explanation"
-    }}
+    }
   ],
   "strategic_consulting_tr": "Buraya TAMAMEN TÜRKÇE olarak hedeflenmiş bir Etik Strateji ve Danışmanlık paragrafı yaz. Listedeki aşırı izlenen toksik/brainrot videoların BAŞARILI KANCALARINI (renk, müzik, ritim) nasıl ahlaklı ve eğitici bir YouTube videosuna uyarlayabileceğimizi yaratıcıya doğrudan anlat. İlham ve cesaret ver."
-}}"""
+}"""
 
 
 def _strip_delimiters(text: str) -> str:
@@ -92,7 +92,9 @@ def _parse(resp: str) -> dict:
     
     # Attempt 1: Raw parse
     try:
-        return json.loads(json_str)
+        parsed = json.loads(json_str)
+        print(f"[ANALYST DEBUG] JSON Parsed successfully. Results: {len(parsed.get('results', []))}")
+        return parsed
     except json.JSONDecodeError:
         pass
         
@@ -101,8 +103,11 @@ def _parse(resp: str) -> dict:
     scrubbed_json = json_str.replace('\n', '\\n').replace('\r', '')
     
     try:
-        return json.loads(scrubbed_json)
+        parsed = json.loads(scrubbed_json)
+        print(f"[ANALYST DEBUG] Parsed after SCRUBBING. Results: {len(parsed.get('results', []))}")
+        return parsed
     except Exception:
+        print("[ANALYST DEBUG] ALL PARSE ATTEMPTS FAILED.")
         pass
         
     return {"results": [], "macro_trends_4_to_12_age": []}
@@ -123,14 +128,15 @@ async def classify_batch(items: list[dict], topic: str) -> dict:
             "content": content[:_MAX_ITEM],
         })
 
-    user_prompt = _USER_TMPL.format(
-        topic=topic,
-        items=json.dumps(batch, ensure_ascii=False, separators=(",", ":")),
+    user_prompt = _USER_TMPL.replace(
+        "{{topic}}", topic
+    ).replace(
+        "{{items}}", json.dumps(batch, ensure_ascii=False, separators=(",", ":"))
     )
 
     resp = await call_llm(
         "abacus", _MODEL, _SYSTEM, user_prompt, max_tokens=_MAX_TOKENS, json_mode=True
     )
+    print(f"[ANALYST DEBUG] LLM Response Length: {len(resp)}")
+    # print(f"[ANALYST DEBUG] RAW RESP: {resp[:500]}...") # Careful with sensitive data or spam
     return _parse(resp)
-
-

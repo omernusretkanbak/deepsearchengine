@@ -21,16 +21,16 @@ _SYSTEM = (
 
 _USER_TMPL = """\
 TURKISH STRATEGY TO IMPLEMENT:
-{strategy}
+{{strategy}}
 
 Return ONLY this exact JSON structure:
-{{
+{
   "hero_concept": "Describe the healthy food hero character (e.g., A brave, hyper-energetic running Strawberry wearing tiny sneakers)",
   "image_prompt": "Midjourney/DALL-E English prompt to generate this character in an engaging background. Must end with --ar 9:16",
   "script": "A 9:16 vertical video English script (fast-paced, high energy, safe content) featuring this hero.\\nUse '\\n' for newlines.",
   "video_prompt": "Sora/Runway image-to-video AI prompt to animate this image. Specify the aspect ratio mapping to 9:16 and let the AI determine the best duration for the fast-paced loop.",
   "voiceover_text": "The exact pure English text for the voiceover (TTS) tool to read, enthusiastically!"
-}}"""
+}"""
 
 def _parse(resp: str) -> dict:
     cleaned = re.sub(r"```(?:json)?", "", resp).strip().rstrip("`")
@@ -56,9 +56,10 @@ async def generate(strategy: str) -> dict:
     if not strategy or "üretilemedi" in strategy.lower():
         return {}
         
-    user_prompt = _USER_TMPL.format(strategy=strategy)
+    user_prompt = _USER_TMPL.replace("{{strategy}}", strategy)
     
     resp = await call_llm(
         "abacus", _MODEL, _SYSTEM, user_prompt, max_tokens=_MAX_TOKENS, json_mode=True
     )
+    print(f"[PRODUCER DEBUG] LLM Response Length: {len(resp)}")
     return _parse(resp)
