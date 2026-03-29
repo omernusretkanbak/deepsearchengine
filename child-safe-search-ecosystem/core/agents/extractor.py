@@ -263,8 +263,6 @@ async def extract(item: dict) -> dict:
     if _is_youtube(url):
         # YouTube → Resmî API ile ışık hızında sıfır hatayla veri çek
         content = await _youtube_api(url)
-        if not content:
-            content = await _llm_fallback(url, "YouTube API fetch failed.")
     else:
         # Diğer siteler → BS4 önce, Playwright yedek
         content = await _bs4(url)

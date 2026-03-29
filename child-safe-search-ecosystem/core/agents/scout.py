@@ -83,36 +83,12 @@ def _dedupe(items: list[dict]) -> list[dict]:
     return out
 
 
-# ── LLM relevance filter ─────────────────────────────────────
-
-async def _filter(items: list[dict], topic: str) -> list[dict]:
-    """Single compact Gemini call → returns indices of relevant items."""
-    if not items:
-        return []
-    batch = json.dumps([{"i": idx, "t": x["title"]} for idx, x in enumerate(items)])
-    system = "Return JSON array of integer indices for URLs relevant to YouTube Shorts content for kids aged 4-12. Nothing else."
-    user   = f"Topic:{topic}\nItems:{batch}"
-    try:
-        resp = await call_llm("abacus", "route-llm", system, user, max_tokens=150, json_mode=True)
-
-
-        # Handle cases where response is directly list or contains [indices]
-
-        m = re.search(r'\[[\d,\s]*\]', resp)
-        if m:
-            indices = json.loads(m.group())
-            return [items[i] for i in indices if isinstance(i, int) and i < len(items)]
-    except Exception:
-        pass
-    return items  # fallback: keep all
-
-
 # ── Public interface ──────────────────────────────────────────
 
 async def discover(topic: str, max_results: int = 15) -> list[dict]:
     """
-    Hybrid search: Native YouTube API (Most Viewed) + Serper (bulk) + Tavily (enriched).
-    Searches BOTH safe and toxic/viral angles for full-spectrum data.
+    Hybrid search: Native YouTube API (Most Viewed) + Serper (bulk).
+    Direct discovery to increase speed.
     """
     # 1. Native YouTube VİRAL ARAMASI (Garantili Milyon İzlenmeler)
     yt_query = f"{topic}"
@@ -131,6 +107,5 @@ async def discover(topic: str, max_results: int = 15) -> list[dict]:
     print(f"[SCOUT DEBUG] YT: {len(yt_viral_shorts)} | Serper: {len(serper_safe)+len(serper_toxic)}")
     combined = _dedupe(yt_viral_shorts + serper_safe + serper_toxic)
     print(f"[SCOUT DEBUG] Combined & Deduped: {len(combined)}")
-    filtered = await _filter(combined, topic)
-    print(f"[SCOUT DEBUG] After Filter: {len(filtered)}")
-    return filtered[:max_results]
+
+    return combined[:max_results]
