@@ -58,7 +58,11 @@ def _dedupe(items: list[dict]) -> list[dict]:
     for i in items:
         u = i.get("url","")
         if u and u not in seen:
-            seen.add(u); out.append(i)
+            # SADECE VİDEOLAR: Playlist ve Kanal sayfalarını Python seviyesinde kökten yasakla
+            if "youtube.com/playlist" in u or "youtube.com/channel" in u or "youtube.com/c/" in u or "/@" in u:
+                continue
+            seen.add(u)
+            out.append(i)
     return out
 
 
