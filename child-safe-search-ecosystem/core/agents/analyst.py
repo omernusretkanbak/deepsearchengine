@@ -86,25 +86,35 @@ def _strip_delimiters(text: str) -> str:
 
 
 def _parse(resp: str) -> dict:
-    """Robust JSON extraction — handles markdown fences and partial wrapping."""
-    # Try direct parse
-    try:
-        return json.loads(resp)
-    except json.JSONDecodeError:
-        pass
+    """Robust JSON extraction — handles markdown fences and unescaped newlines."""
+    # Pre-clean string to escape literal newlines that break json parser
+    # We replace literal newlines with space or \\n, but only safely.
+    
     # Strip markdown fences
     cleaned = re.sub(r"```(?:json)?", "", resp).strip().rstrip("`")
+    
+    # Find the largest JSON block
+    m = re.search(r"\{.*\}", cleaned, re.DOTALL)
+    if not m:
+        return {"results": [], "macro_trends_4_to_12_age": []}
+        
+    json_str = m.group()
+    
+    # Attempt 1: Raw parse
     try:
-        return json.loads(cleaned)
+        return json.loads(json_str)
     except json.JSONDecodeError:
         pass
-    # Last resort: find first {...} block
-    m = re.search(r"\{.*\}", cleaned, re.DOTALL)
-    if m:
-        try:
-            return json.loads(m.group())
-        except Exception:
-            pass
+        
+    # Attempt 2: Aggressive newline scrubbing (Models often fail to escape \n in scripts/prompts)
+    # We replace literal newlines with "\\n" sequence
+    scrubbed_json = json_str.replace('\n', '\\n').replace('\r', '')
+    
+    try:
+        return json.loads(scrubbed_json)
+    except Exception:
+        pass
+        
     return {"results": [], "macro_trends_4_to_12_age": []}
 
 
