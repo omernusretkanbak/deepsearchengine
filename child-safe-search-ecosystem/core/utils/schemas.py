@@ -54,4 +54,5 @@ class DeepSearchOutput(BaseModel):
     research_topic:           str
     macro_trends_4_to_12_age: list[MacroTrend]
     results:                  list[SearchResult]
+    strategic_consulting_tr:  str = Field(default="", description="Turkish ethical strategy text")
     automation_metadata:      AutomationMetadata

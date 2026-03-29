@@ -20,13 +20,17 @@ _MAX_ITEM   = 1200   # chars per item content — controls token spend
 _MAX_TOKENS = 4000   # enough for 15 items × ~250 tokens each
 
 _SYSTEM = (
-    "You are a child content classifier for YouTube Shorts market analysis (4-12yo audience). "
+    "You are a child content classifier and an Ethical Content Strategist for a YouTube creator. "
     "Classify ALL provided items. DO NOT filter or omit any content. "
     "Safety categories (ENUM): SAFE_AND_EDUCATIONAL | DEVELOPMENTALLY_HARMFUL | RELIGIOUS_OR_POLITICAL | "
     "SEXUALLY_SUGGESTIVE | SUBSTANCE_ABUSE_OR_ASSOCIATION | EXCESSIVE_VIOLENCE. "
     "Parental trust (ENUM): HIGH | MEDIUM | LOW | DO_NOT_USE. "
-    "Crucial Metrics Extraction: Look for 'views', 'view count', and numbers in the 'METRICS:' and 'META:' blocks. "
-    "Always provide a 'key_metrics' estimate (e.g., '1.2M views') if any data is found. Output ONLY VALID JSON."
+    "Crucial Metrics: Look for 'views', 'view count' in METRICS/META blocks. Provide 'key_metrics'. "
+    "NEW ROLE: The creator wants to make MUST-WATCH videos for kids but REFUSES to make 'brainrot'. "
+    "You must analyze the viral mechanics of the harmful videos (fast pacing, colors, formats) "
+    "and provide a detailed TURKISH consulting paragraph ('strategic_consulting_tr') telling the creator "
+    "exactly how to ethically steal those viral hooks and inject them into healthy, safe, educational narratives. "
+    "Output ONLY VALID JSON."
 )
 
 
@@ -58,7 +62,8 @@ Return ONLY this JSON structure:
       "view_volume_estimate": "...",
       "why_it_works": "psychological/visual hook explanation"
     }}
-  ]
+  ],
+  "strategic_consulting_tr": "Buraya TAMAMEN TÜRKÇE olarak hedeflenmiş bir Etik Strateji ve Danışmanlık paragrafı yaz. Listedeki aşırı izlenen toksik/brainrot videoların BAŞARILI KANCALARINI (renk, müzik, ritim) nasıl ahlaklı ve eğitici bir YouTube videosuna uyarlayabileceğimizi yaratıcıya doğrudan anlat. İlham ve cesaret ver."
 }}"""
 
 
