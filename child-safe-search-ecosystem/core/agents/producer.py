@@ -13,7 +13,8 @@ _SYSTEM = (
     "You will receive a TURKISH STRATEGY that tells you how to capture the viewer's attention. "
     "Your ONLY job is to convert that strategy into a hyper-detailed, strictly structured English JSON plan. "
     "CRITICAL STORYBOARD RULE: You MUST output a 'scenes' list. Each scene must include a sequence number, start/end timestamps, a hyper-descriptive video prompt, and pure voiceover text."
-    "CRITICAL HERO RULE: Use anthropomorphized, cute healthy foods (Brave Broccoli, Speedy Strawberry, Strong Egg)."
+    "CHARACTER CONSISTENCY RULE: Every 'video_prompt' in the scenes list MUST start with the physical description from 'image_anchor_prompt'. This ensures the character looks identical in all generated clips."
+    "CRITICAL HERO RULE: Create a kid-friendly, ethically-sound, and topic-appropriate hero character (anthropomorphized objects/animals/characters). Use a name that reflects their role (e.g., 'Eco-Eagle' for nature, 'Byte-Bot' for tech, etc.)."
 )
 
 _USER_TMPL = """\
@@ -61,8 +62,9 @@ async def generate(strategy: str) -> dict:
         
     user_prompt = _USER_TMPL.replace("{{strategy}}", strategy)
     
+    provider = os.getenv("PRODUCER_PROVIDER", "openai")
     resp = await call_llm(
-        "openai", _MODEL, _SYSTEM, user_prompt, max_tokens=_MAX_TOKENS, json_mode=True
+        provider, _MODEL, _SYSTEM, user_prompt, max_tokens=_MAX_TOKENS, json_mode=True
     )
     print(f"[PRODUCER DEBUG] LLM Response Length: {len(resp)}")
     return _parse(resp)

@@ -134,8 +134,9 @@ async def classify_batch(items: list[dict], topic: str) -> dict:
         "{{items}}", json.dumps(batch, ensure_ascii=False, separators=(",", ":"))
     )
 
+    provider = os.getenv("ANALYST_PROVIDER", "openai")
     resp = await call_llm(
-        "openai", _MODEL, _SYSTEM, user_prompt, max_tokens=_MAX_TOKENS, json_mode=True
+        provider, _MODEL, _SYSTEM, user_prompt, max_tokens=_MAX_TOKENS, json_mode=True
     )
     print(f"[ANALYST DEBUG] LLM Response Length: {len(resp)}")
     # print(f"[ANALYST DEBUG] RAW RESP: {resp[:500]}...") # Careful with sensitive data or spam
