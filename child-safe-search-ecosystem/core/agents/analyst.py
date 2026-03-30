@@ -15,7 +15,7 @@ import json
 import re
 from core.utils.model_router import call_llm
 
-_MODEL      = os.getenv("ANALYST_MODEL", "claude-3-7-sonnet-20250219")
+_MODEL      = os.getenv("ANALYST_MODEL", "gpt-4o")
 _MAX_ITEM   = 1200   # chars per item content — controls token spend
 _MAX_TOKENS = 4000   # enough for 15 items × ~250 tokens each
 
@@ -135,7 +135,7 @@ async def classify_batch(items: list[dict], topic: str) -> dict:
     )
 
     resp = await call_llm(
-        "abacus", _MODEL, _SYSTEM, user_prompt, max_tokens=_MAX_TOKENS, json_mode=True
+        "openai", _MODEL, _SYSTEM, user_prompt, max_tokens=_MAX_TOKENS, json_mode=True
     )
     print(f"[ANALYST DEBUG] LLM Response Length: {len(resp)}")
     # print(f"[ANALYST DEBUG] RAW RESP: {resp[:500]}...") # Careful with sensitive data or spam

@@ -1,5 +1,6 @@
 from pydantic import BaseModel, field_validator, Field
 from enum import Enum
+from typing import List
 
 
 class SafetyCategory(str, Enum):

@@ -34,9 +34,11 @@ def _google() -> genai.Client:
 
 @lru_cache(maxsize=1)
 def _abacus_client() -> _openai.AsyncOpenAI:
+    # Abacus RouteLLM sometimes expects 'apiKey' header specifically
     return _openai.AsyncOpenAI(
         api_key=os.environ["ABACUSAI_API_KEY"],
-        base_url="https://routellm.abacus.ai/v1"
+        base_url="https://routellm.abacus.ai/v1",
+        default_headers={"apiKey": os.environ["ABACUSAI_API_KEY"]}
     )
 
 
@@ -97,15 +99,15 @@ async def call_llm(
                 return resp.choices[0].message.content
 
             elif provider == "abacus":
+                messages = [
+                    {"role": "user", "content": f"{system}\n\nUSER REQUEST: {user}"}
+                ]
                 kwargs: dict = dict(
                     model=model,
                     max_tokens=max_tokens,
-                    messages=[
-                        {"role": "system", "content": system},
-                        {"role": "user", "content": user},
-                    ],
+                    messages=messages,
                 )
-                if json_mode:
+                if json_mode and "route-llm" not in model:
                     kwargs["response_format"] = {"type": "json_object"}
                 resp = await _abacus_client().chat.completions.create(**kwargs)
                 return resp.choices[0].message.content
